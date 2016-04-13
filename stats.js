@@ -19,36 +19,35 @@ function stats(opts) {
   var interval = opts.statsinterval || 1;
   var containerDelay = opts.containerDelay || 0;
   var streamMode = true;
-  if (typeof opts.streamMode != 'undefined' &&
-      opts.streamMode != null) {
+  if (typeof opts.streamMode !== 'undefined' &&
+      opts.streamMode !== null) {
     streamMode = opts.streamMode;
   }
   var statsPullInProgress = false;
-
-  console.log('stream mode: ' + streamMode);
-  console.log('container delay: ' + containerDelay);
-  console.log('stats interval: ' + interval);
 
   function getContainerStats() {
     if (statsPullInProgress) {return;}
     statsPullInProgress = true;
     async.eachSeries(Object.keys(containers), function(container, next) {
       var containerObj = containers[container];
-      //console.log(moment().format() + ': Pulling stats for ' + container);
-      containerObj.docker.stats({stream:false}, function(err, stream) {
-        if (err) {next (err);}
-        stream.pipe(through.obj(function(stats, enc, cb) {
-          this.push({
-                   v: 0,
-                   id: container.slice(0, 12),
-                   image: containerObj.meta.image,
-                   name: containerObj.meta.name,
-                   stats: JSON.parse(stats)
-                 });
-          cb();
-        })).pipe(result, { end: false });
-      });
-      setTimeout(next, containerDelay);
+      if (containerObj && containerObj.docker) {
+        containerObj.docker.stats({stream:false}, function(err, stream) {
+          if (err) {next (err);}
+          if (stream && stream.pipe) {
+            stream.pipe(through.obj(function(stats, enc, cb) {
+              this.push({
+                       v: 0,
+                       id: container.slice(0, 12),
+                       image: containerObj.meta.image,
+                       name: containerObj.meta.name,
+                       stats: JSON.parse(stats)
+                     });
+              cb();
+            })).pipe(result, { end: false });
+          }
+        });
+        setTimeout(next, containerDelay);
+      }
     }, function() {
       statsPullInProgress = false;
     });
