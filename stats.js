@@ -32,8 +32,7 @@ function stats(opts) {
       var containerObj = containers[container];
       if (containerObj && containerObj.docker) {
         containerObj.docker.stats({stream:false}, function(err, stream) {
-          if (err) {next (err);}
-          if (stream && stream.pipe) {
+          if (!err && stream && stream.pipe) {
             stream.pipe(through.obj(function(stats, enc, cb) {
               this.push({
                        v: 0,
