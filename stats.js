@@ -26,7 +26,7 @@ function stats(opts) {
   var statsPullInProgress = false;
 
   function getContainerStats() {
-    if (statsPullInProgress) {return;}
+    // if (statsPullInProgress) {return;}
     statsPullInProgress = true;
     async.eachSeries(Object.keys(containers), function(container, next) {
       var containerObj = containers[container];
